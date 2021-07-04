@@ -4,6 +4,9 @@
   "main": "index.js",
   "author": "Vettvangur ehf.",
   "private": true,
+  "dependencies": {
+    "luna-engine": "^0.0.16"
+  },
   "devDependencies": {
     "@primer/css": "^13.1.0",
     "awesome-typescript-loader": "^5.2.1",
