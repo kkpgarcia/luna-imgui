@@ -1,0 +1,6 @@
+.DS_Store
+.cache
+.awcache
+
+**/node_modules
+/build
