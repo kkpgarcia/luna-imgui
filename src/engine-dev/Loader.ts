@@ -13,7 +13,7 @@ export default class Loader
 
         //Add textures
         let texLoaders = this.CreateLoaderArray(loadMap.textures, (name) => { 
-            Resource.instance.GetImage(Directory.TEXTURE_DIR, name, (data: any) => {
+            Resource.instance.GetImage(Directory.TEXTURE_DIR, name, (data: ArrayBufferView) => {
                 AppCache.instance.AddTexture(name, data);
             })
         });
@@ -75,6 +75,7 @@ export default class Loader
         return retVal;
     }
 
+    //TODO: Change to monad/promise chain/task
     private CreateLoaderPromise(loaders: Function[]): Promise<number>
     {
         return new Promise((resolve, reject) => {
