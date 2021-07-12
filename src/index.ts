@@ -19,6 +19,7 @@ function loadApp() {
     import('core-js/es/string')
     import('core-js/es/array/includes')
     import('core-js/es/object')
+
     // import(/* webpackChunkName: "babel-poly" */ 'babel-polyfill').then(() => {
     //   console.log("loaded babel-polyfill")
     //   resolve();

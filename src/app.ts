@@ -1,9 +1,19 @@
+import Loader from "./engine-dev/Loader";
 import Game from "./Game";
 
-export default class App
-{
-    constructor()
-    {
+const loadMap = {
+    textures: [
+        "images.jpg"
+    ],
+    shaders: [
+        "basic.shader"
+    ]
+}
+
+
+new Loader(
+    loadMap,
+    () => {
         let canvas = document.createElement("canvas");
         document.body.appendChild(canvas);
 
@@ -12,8 +22,8 @@ export default class App
 
         let game = new Game(canvas);
         game.Start();
+    },
+    (msg: string) => {
+        console.error(msg);
     }
-}
-
-new App();
-
+)

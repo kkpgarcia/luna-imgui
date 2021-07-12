@@ -1,16 +1,13 @@
 import 
 { 
-    Renderer, 
+    Renderer,
     RenderingContext, 
     Shader, 
     VertexArray, 
     VertexBuffer, 
     IndexBuffer, 
     VertexBufferLayout,
-    // Texture
-} from "luna-engine";
-
-// import Resource from "../engine-dep/Util/Resource";
+} from "@luna-engine/renderer";
 
 export default class Game
 {
@@ -19,7 +16,7 @@ export default class Game
         RenderingContext.instance.Init(canvas);
     }
 
-    public Start(): void
+    public async Start(): Promise<void>
     {
         const gl = RenderingContext.instance.gl;
 
@@ -43,7 +40,7 @@ export default class Game
         vertexArray.AddBuffer(vertexBuffer, layout);
         
         const indexBuffer = new IndexBuffer(indices, 6);
-        const shader = new Shader();
+        const shader = new Shader("basic.shader");
         const renderer = new Renderer();
 
         // const texture = new Texture("");
@@ -57,7 +54,5 @@ export default class Game
         shader.SetUniform4f("u_Color", [1, 0, 0, 1]);
         
         renderer.Draw(vertexArray, indexBuffer, shader);
-
-        //Try to load something here
     }
 }

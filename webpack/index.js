@@ -50,5 +50,9 @@ module.exports = (env = {
     resolve,
 
     watch: !isProduction,
+    externals: {
+      fs : require('fs'),
+      path : require('path')
+    }
   }
 }
