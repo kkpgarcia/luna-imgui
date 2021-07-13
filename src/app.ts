@@ -3,7 +3,8 @@ import Game from "./Game";
 
 const loadMap = {
     textures: [
-        "images.jpg"
+        "images.jpg",
+        "test.png"
     ],
     shaders: [
         "basic.shader"

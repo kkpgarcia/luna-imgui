@@ -13,8 +13,9 @@ export default class Loader
 
         //Add textures
         let texLoaders = this.CreateLoaderArray(loadMap.textures, (name) => { 
-            Resource.instance.GetImage(Directory.TEXTURE_DIR, name, (data: ArrayBufferView) => {
+            Resource.instance.GetImage(Directory.TEXTURE_DIR, name, (data: any) => {
                 AppCache.instance.AddTexture(name, data);
+                console.log(data);
             })
         });
         
