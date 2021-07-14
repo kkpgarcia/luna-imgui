@@ -5,10 +5,10 @@
   "author": "Vettvangur ehf.",
   "private": true,
   "dependencies": {
-    "@luna-engine/core": "0.0.19",
-    "@luna-engine/events": "0.0.19",
+    "@luna-engine/core": "0.0.20",
+    "@luna-engine/events": "0.0.20",
     "@luna-engine/math": "0.0.20",
-    "@luna-engine/renderer": "0.0.23",
+    "@luna-engine/renderer": "0.0.24",
     "@luna-engine/utility": "0.0.22"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "whatwg-fetch": "^3.0.0"
   },
   "scripts": {
-    "p-install": "npm install @luna-engine/core @luna-engine/events @luna-engine/math @luna-engine/renderer @luna-engine/utility --registry http://localhost:4873/",
+    "setup": "npm install @luna-engine/core @luna-engine/events @luna-engine/math @luna-engine/renderer @luna-engine/utility --registry http://localhost:4873/",
     "build": "webpack --config ./webpack --env.production",
     "clean:mac": "rm -rf node_modules && npm i",
     "clean:pc": "rd /s /q node_modules && npm i",
