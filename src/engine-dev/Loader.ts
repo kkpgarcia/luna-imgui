@@ -1,4 +1,5 @@
 import { Resource, Directory, AppCache, CacheType } from "@luna-engine/utility";
+// import AppCache from "./AppCache";
 
 export default class Loader
 {
@@ -41,7 +42,7 @@ export default class Loader
                     //Sanity check for resources
                     const allLoaded = 
                         AppCache.instance.CheckContains(CacheType.TEXTURE, loadMap.textures) &&
-                        AppCache.instance.CheckContains(CacheType.SHADER, loadMap.shaders);
+                        AppCache.instance.CheckContains(CacheType.SHADER, loadMap.shaders);;
 
                     if (allLoaded)
                     {
@@ -59,7 +60,7 @@ export default class Loader
                 }
             };
 
-            await (new Promise(((resolve, reject) => setTimeout(delayedStart, 1000))));
+            await (new Promise(((resolve, reject) => setTimeout(delayedStart, 2000))));
         })
     }
 

@@ -7,9 +7,9 @@
   "dependencies": {
     "@luna-engine/core": "0.0.20",
     "@luna-engine/events": "0.0.20",
-    "@luna-engine/math": "0.0.20",
-    "@luna-engine/renderer": "0.0.24",
-    "@luna-engine/utility": "0.0.22"
+    "@luna-engine/math": "0.0.22",
+    "@luna-engine/renderer": "0.0.26",
+    "@luna-engine/utility": "0.0.26"
   },
   "devDependencies": {
     "@primer/css": "^13.1.0",
