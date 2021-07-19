@@ -21,9 +21,9 @@ import AppCache, { CacheType } from "@luna-engine/utility/dist/AppCache";
 
 export default class Game
 {
-    private _position: Vector3 = new Vector3(0, 0, 0);
+    private _position: Vector3 = new Vector3(0, 0, -10);
     private _rotation: Vector3 = new Vector3(0, 0, 0);
-    private _scale: Vector3 = new Vector3(.1, .1, .1);
+    private _scale: Vector3 = new Vector3(1, 1, 1);
     
     private matrix: Mat4x4;
     private _color: number[] = [0, 0, 0, 1];
@@ -31,6 +31,10 @@ export default class Game
     private _vertexArray: VertexArray;
     private _indexBuffer: IndexBuffer;
     private _renderer: Renderer;
+
+    private _numObjects = 10;
+    private _radius = 15;
+    private _cameraAngle = 0;
 
     constructor(canvas: HTMLCanvasElement)
     {
@@ -40,7 +44,7 @@ export default class Game
     public async Start(): Promise<void>
     {
         const gl = RenderingContext.instance.gl;
-     
+
         const vertices = this.Cube();
         const indices = this.CubeIndices();
      
@@ -76,15 +80,38 @@ export default class Game
 
         this._shader.Bind();
         
-        this.matrix = Mat4x4.IDENTITY
-            .Multiply_i(Mat4x4.Translation(this._position))
-            .Multiply_i(Mat4x4.Rotation(this._rotation))
-            .Multiply_i(Mat4x4.Scaling(this._scale));
-        
-        this._shader.SetUniform4f("u_Color", this._color);
-        this._shader.SetUniformMatrix4fv("u_Matrix", false, this.matrix.ToArray());
-        
-        this._renderer.Draw(this._vertexArray, this._indexBuffer, this._shader);
+        const aspect = 1;//window.screen.width/window.screen.height;
+        const zFar = 500;
+        const projectionMatrix = Mat4x4.Perspective(30, aspect, 1, zFar);
+        let cameraMatrix = Mat4x4.Rotation(new Vector3(10, this._cameraAngle, 0));
+        cameraMatrix = cameraMatrix.Multiply_i(Mat4x4.Translation(new Vector3(0, 5, 60)));
+        const viewMatrix = Mat4x4.Inverse(cameraMatrix);
+        const viewProjectionMatrix = Mat4x4.Multiply(projectionMatrix, viewMatrix);
+
+
+        //Quick creation of objects
+        for (let i = 0; i < this._numObjects; ++i)
+        {
+            const angle = i * Math.PI * 2 / this._numObjects;
+            const x = Math.cos(angle) * this._radius;
+            const z = Math.sin(angle) * this._radius;
+
+            this._position = new Vector3(x, 0, z);
+
+            this.matrix = //Mat4x4.IDENTITY
+                // this.Projection(800, 800, 400)
+                // this.Orthographic(0, 800, 800, 0, -400, 400)
+                // this.Perspective(60, aspect, 1, zFar)
+                viewProjectionMatrix
+                .Multiply_i(Mat4x4.Translation(this._position))
+                .Multiply_i(Mat4x4.Rotation(this._rotation))
+                .Multiply_i(Mat4x4.Scaling(this._scale));
+            
+            this._shader.SetUniform4f("u_Color", this._color);
+            this._shader.SetUniformMatrix4fv("u_Matrix", false, this.matrix.ToArray());
+            
+            this._renderer.Draw(this._vertexArray, this._indexBuffer, this._shader);
+        }
     }
 
     private UpdateColor(deltaTime: number): void
@@ -99,12 +126,13 @@ export default class Game
         this._rotation.x += 20 * deltaTime;
         this._rotation.y += 20 * deltaTime;
         this._rotation.z += 20 * deltaTime;
+        this._cameraAngle += 100 * deltaTime;
     }
 
 
     private InputUpdate(deltaTime: number): void
     {
-        const speed = 1 * deltaTime;
+        const speed = 500 * deltaTime;
         if(InputManager.instance.onKeyDown("ArrowUp"))
         {
             this._position.y += speed;
@@ -178,4 +206,9 @@ export default class Game
             20, 21, 22,     20, 22, 23,   // left
           ];
     }
+
+    // public LookAt(cameraPos: Vector3, target: Vector3, up: Vector3): Mat4x4
+    // {
+    //     const z = cameraPos.Subtract(target);
+    // }
 }
