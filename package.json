@@ -7,8 +7,8 @@
   "dependencies": {
     "@luna-engine/core": "0.0.20",
     "@luna-engine/events": "0.0.20",
-    "@luna-engine/math": "0.0.23",
-    "@luna-engine/renderer": "0.0.26",
+    "@luna-engine/math": "0.0.26",
+    "@luna-engine/renderer": "0.0.27",
     "@luna-engine/utility": "0.0.26"
   },
   "devDependencies": {

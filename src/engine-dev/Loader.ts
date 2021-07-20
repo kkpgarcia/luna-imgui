@@ -60,7 +60,7 @@ export default class Loader
                 }
             };
 
-            await (new Promise(((resolve, reject) => setTimeout(delayedStart, 2000))));
+            await (new Promise(((resolve, reject) => setTimeout(delayedStart, 500))));
         })
     }
 
