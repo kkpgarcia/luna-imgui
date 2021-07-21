@@ -15,29 +15,39 @@ import { NotificationCenter, EventArgs } from "@luna-engine/events";
 // import Mat3x3 from "./engine-dev/Mat3x3";
 import { Vector3, Mat4x4 } from "@luna-engine/math";
 // import Mat4x4 from "./engine-dev/Mat4x4";
-// import InputManager from "./engine-dev/InputManager";
+import InputManager from "./engine-dev/InputManager";
 import AppCache, { CacheType } from "@luna-engine/utility/dist/AppCache";
 import Transform from "./engine-dev/Component/Transform";
-// import Screen from "./engine-dev/Screen";
+import CameraEntity from "./engine-dev/CameraEntity";
+import Screen from "./engine-dev/Screen";
+import { ViewportGrid } from "./engine-dev/ViewportGrid";
+
+export interface IRenderable
+{
+    vao: VertexArray,
+    ibo: IndexBuffer,
+    shader: Shader
+}
 
 export default class Game
 {
-    // private _cameraPosition: Vector3 = new Vector3(0, 5, 60);
-    // private _rotation: Vector3 = new Vector3(0, 0, 0);
-    // private _scale: Vector3 = new Vector3(1, 1, 1);
-    
     private matrix: Mat4x4;
     private _color: number[] = [0.2, 1, 0.2, 1];
-    private _shader: Shader;
-    private _vertexArray: VertexArray;
-    private _indexBuffer: IndexBuffer;
-    private _renderer: Renderer;
-
+    // private _shader: Shader;
+    
     private _numObjects = 10;
     private _radius = 15;
-    private _cameraAngle = 0;
     private _transforms = [];
-    private _cameraTransform: Transform;
+    
+    //Cube
+    private _renderer: Renderer;
+
+    //Grid
+    private _cameraEntity: CameraEntity;
+
+    private _renderables: IRenderable[];
+
+    private _worldRotation: Vector3 = new Vector3();
 
     constructor(canvas: HTMLCanvasElement)
     {
@@ -47,44 +57,52 @@ export default class Game
     public async Start(): Promise<void>
     {
         const gl = RenderingContext.instance.gl;
+        
+        //Move to rendering context
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
+        gl.enable(gl.DEPTH_TEST);
 
+        this._renderables = [];
+
+        //Cube
         const vertices = this.Cube();
         const normals = this.CalculateNormals(vertices);
         const indices = this.CubeIndices();
 
         const modelData = this.PreprocessBuffers(vertices, normals);
 
-        this._vertexArray = new VertexArray();
+        const vertexArray = new VertexArray();
         
         const vertexBuffer = new VertexBuffer(modelData);
         const layout = new VertexBufferLayout();
         layout.Push(3, gl.FLOAT);
         layout.Push(3, gl.FLOAT);
-        this._vertexArray.AddBuffer(vertexBuffer, layout);
-
-        // const normalsBuffer = new VertexBuffer(normals);
-        // const nLayout = new VertexBufferLayout();
-        // nLayout.Push(3, gl.FLOAT);
-        // layout.Push(3, gl.FLOAT);
-        // this._vertexArray.AddBuffer(normalsBuffer, layout);
-        
-        // nLayout.Push(3, gl.FLOAT);
-
-        // const nlayout = new VertexBufferLayout();
-        // layout.Push(3, gl.FLOAT);
-        // this._vertexArray.AddBuffer(normalsBuffer, layout);
+        vertexArray.AddBuffer(vertexBuffer, layout);
      
-        this._indexBuffer = new IndexBuffer(indices, indices.length);
+        const indexBuffer = new IndexBuffer(indices, indices.length);
      
         const shaderSource = AppCache.instance.GetShader("transform.shader");
-        this._shader = new Shader(shaderSource);
+        const shader = new Shader(shaderSource);
         AppCache.instance.DisposeKey(CacheType.SHADER, "transform.shader");
      
+        this._renderables.push({
+            vao: vertexArray,
+            ibo: indexBuffer,
+            shader: shader
+        });
+
+        //Grid
+        const grid = new ViewportGrid();
+        
+        this._renderables.push(grid.Renderable);
+
         this._renderer = new Renderer();
 
-        this._cameraTransform = new Transform();
-        // this._cameraTransform.position.z = 10;
+        this._cameraEntity = new CameraEntity();
+        this._cameraEntity.transform.Rotate(new Vector3(-20, 0, 0))
+        this._cameraEntity.transform.Translate(new Vector3(0, 30, 40))
+
         for (let i = 0; i < this._numObjects; i++)
         {
             this._transforms.push(new Transform());
@@ -95,112 +113,103 @@ export default class Game
 
     private Update(deltaTime: number): void
     {
-        // this.InputUpdate(deltaTime);
-        // this.UpdateColor(deltaTime);
-        // this.UpdateRotation();
+        this.InputUpdate(deltaTime);
+        this.UpdateColor(deltaTime);
         this.Draw();
     }
 
     private Draw(): void
     {
+        Screen.ResizeCheck();
         this._renderer.Clear();
 
-        this._shader.Bind();
-        
-        const aspect = 1;//window.screen.width/window.screen.height;
-        const zFar = 500;
-        const projectionMatrix = Mat4x4.Perspective(30, aspect, 1, zFar);
+        const worldMatrix = Mat4x4.Rotation(this._worldRotation);
+        const worldViewProjectionMatrix = Mat4x4.Multiply(this._cameraEntity.viewProjectionMatrix, worldMatrix);
+        const worldInverseMatrix = Mat4x4.Inverse(worldMatrix);
+        const worldInverseTransposeMatrix = this.Transpose(worldInverseMatrix);
 
-        this._cameraTransform.Rotate(new Vector3(-20, this._cameraAngle, 0));
-        this._cameraTransform.Translate(new Vector3(0, 20, 40));
-
-        // let cameraMatrix = Mat4x4.Rotation(new Vector3(0, this._cameraAngle, 0));
-        // cameraMatrix = cameraMatrix.Multiply_i(Mat4x4.Translation(this._cameraPosition));
-
-        // const cameraPosition = new Vector3(
-        //     this._cameraTransform.matrix.Get(12), 
-        //     this._cameraTransform.matrix.Get(13), 
-        //     this._cameraTransform.matrix.Get(14)
-        //     );
-        // const cameraMatrix = this.LookAt(this._cameraTransform.position, this._transforms[0].position);
-        
-        // const cameraMatrix = Mat4x4.LookAt(cameraPosition, new Vector3(this._radius, 0, 0), Vector3.UP);
-
-        // const viewMatrix = Mat4x4.Inverse(this._cameraTransform.matrix);
-        // this._cameraTransform.LookAt(this._cameraTransform.position, new Vector3(this._radius, 0, 0));
-        
-        const viewMatrix = Mat4x4.Inverse(this._cameraTransform.matrix);
-        const viewProjectionMatrix = Mat4x4.Multiply(projectionMatrix, viewMatrix);
-
-        // const worldMatrix = Mat4x4.Rotation(new Vector3(0, 0, 0));
-        // const worldViewProjectionMatrix = Mat4x4.Multiply(viewProjectionMatrix, worldMatrix);
-
-        
-
-        //Quick creation of objects
-        for (let i = 0; i < this._numObjects; ++i)
+        for(let r = 0; r < this._renderables.length; r++)
         {
-            const angle = i * Math.PI * 2 / this._numObjects;
-            const x = Math.cos(angle) * this._radius;
-            const z = Math.sin(angle) * this._radius;
+            const currShader = this._renderables[r].shader;
+            const currVAO = this._renderables[r].vao;
+            const currIBO = this._renderables[r].ibo;
 
-            const transform = this._transforms[i];
-            transform.Translate(new Vector3(x, 0, z))
-            // // transform.LookAt(transform.position, new Vector3(1, 1, 0));
-            transform.Rotate(
-                new Vector3(
-                    transform.rotation.x + 1, 
-                    transform.rotation.y + 1, 
-                    transform.rotation.z + 1)
-                    );
+            currShader.Bind();
 
-            this.matrix = viewProjectionMatrix.Multiply_i(transform.matrix)
+            //Quick creation of objects
+            if (r == 0)
+            {
+                for (let i = 0; i < this._numObjects; ++i)
+                {
+                    const angle = i * Math.PI * 2 / this._numObjects;
+                    const x = Math.cos(angle) * this._radius;
+                    const z = Math.sin(angle) * this._radius;
+
+                    const transform = this._transforms[i];
+                    transform.Translate(new Vector3(x, 0, z))
+
+                    transform.Rotate(
+                        new Vector3(
+                            transform.rotation.x + 1, 
+                            transform.rotation.y + 1, 
+                            transform.rotation.z + 1
+                    ));
+
+                    // this.matrix = Mat4x4.Multiply(worldViewProjectionMatrix, transform.matrix);//worldViewProjectionMatrix.Multiply_i(transform.matrix)
+                    this.matrix = Mat4x4.Multiply(worldViewProjectionMatrix, transform.matrix);//worldViewProjectionMatrix.Multiply_i(transform.matrix)
+                    
+                    currShader.SetUniform4fv("u_Color", this._color);
+                    currShader.SetUniformMatrix4fv("u_Matrix", false, this.matrix.ToArray());
+                    currShader.SetUniformMatrix4fv("u_WorldInverseTranspose", false, worldInverseTransposeMatrix.ToArray());
+                    let reverseLightDirection = new Vector3(0.2, 0.7, 1);
+                    currShader.SetUniform3fv("u_ReverseLightDirection",reverseLightDirection.Normalize().ToArray());
+                    
+                    this._renderer.Draw(currVAO, currIBO, currShader);
+                }
+            }
+            else
+            {
+                const gridMatrix = Mat4x4.Multiply(worldViewProjectionMatrix, Mat4x4.IDENTITY);
+                currShader.SetUniform4fv("u_Color", [0.5, 0.5, 0.5, 1]);
+                currShader.SetUniformMatrix4fv("u_Matrix", false, gridMatrix.ToArray());
+                this._renderer.Draw(currVAO, currIBO, currShader);
+            }
             
-            // this._shader.SetUniformMatrix4fv("u_WorldViewProjection", false, worldViewProjectionMatrix.ToArray());
-            this._shader.SetUniform4fv("u_Color", this._color);
-            this._shader.SetUniformMatrix4fv("u_Matrix", false, this.matrix.ToArray());
-            let reverseLightDirection = new Vector3(0.2, 0.7, 1);
-            this._shader.SetUniform3fv("u_ReverseLightDirection",reverseLightDirection.Normalize().ToArray());
-            
-            this._renderer.Draw(this._vertexArray, this._indexBuffer, this._shader);
         }
+
+        
     }
 
-    // private UpdateColor(deltaTime: number): void
-    // {
-    //     this._color[0] = this._color[0];//this._color[0] > 1 ? 0 : this._color[0] += 1 * deltaTime;
-    //     this._color[1] = this._color[1];//this._color[1] > 1 ? 0 : this._color[1] += 3 * deltaTime;
-    //     this._color[2] = this._color[2];//this._color[2] > 1 ? 0 : this._color[2] += 2 * deltaTime;
-    // }
-
-    // private UpdateRotation(): void
-    // {;
-    //     this._cameraAngle += 1;
-    // }
+    private UpdateColor(deltaTime: number): void
+    {
+        this._color[0] = this._color[0] > 1 ? 0 : this._color[0] += 1 * deltaTime;
+        this._color[1] = this._color[1] > 1 ? 0 : this._color[1] += 3 * deltaTime;
+        this._color[2] = this._color[2] > 1 ? 0 : this._color[2] += 2 * deltaTime;
+    }
 
 
-    // private InputUpdate(deltaTime: number): void
-    // {
-    //     const speed = 500 * deltaTime;
-    //     if(InputManager.instance.onKeyDown("ArrowUp"))
-    //     {
-    //         this._position.y += speed;
-    //     }
+    private InputUpdate(deltaTime: number): void
+    {
+        const speed = 200 * deltaTime;
+        if(InputManager.instance.onKeyDown("ArrowUp"))
+        {
+            this._worldRotation.x += speed;
+        }
         
-    //     if(InputManager.instance.onKeyDown("ArrowDown"))
-    //     {
-    //         this._position.y -= speed;
-    //     }
-    //     if(InputManager.instance.onKeyDown("ArrowLeft"))
-    //     {
-    //         this._position.x -= speed;
-    //     }
-    //     if(InputManager.instance.onKeyDown("ArrowRight"))
-    //     {
-    //         this._position.x += speed;
-    //     }
+        if(InputManager.instance.onKeyDown("ArrowDown"))
+        {
+            this._worldRotation.x -= speed;
+        }
 
-    // }
+        if(InputManager.instance.onKeyDown("ArrowLeft"))
+        {
+            this._worldRotation.y -= speed;
+        }
+        if(InputManager.instance.onKeyDown("ArrowRight"))
+        {
+            this._worldRotation.y += speed;
+        }
+    }
 
     public Cube(): number[]
     {
@@ -288,6 +297,16 @@ export default class Game
         }
 
         return retValue;
+    }
+
+    private Transpose(m: Mat4x4): Mat4x4
+    {
+        return new Mat4x4 (
+            m.Get(0), m.Get(4), m.Get(8), m.Get(12),
+            m.Get(1), m.Get(5), m.Get(9), m.Get(13),
+            m.Get(2), m.Get(6), m.Get(10), m.Get(14),
+            m.Get(3), m.Get(7), m.Get(11), m.Get(15),
+        );
     }
 
     // public LookAt(cameraPos: Vector3, target: Vector3, up: Vector3 = Vector3.UP): Mat4x4

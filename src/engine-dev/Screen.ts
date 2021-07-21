@@ -1,3 +1,4 @@
+import { RenderingContext } from "@luna-engine/renderer";
 import { Config } from "@luna-engine/utility"
 
 export default class Screen
@@ -14,17 +15,16 @@ export default class Screen
         return this._canvas.height;
     }
 
+    public static get Aspect(): number
+    {
+        return this._canvas.clientWidth / this._canvas.clientHeight;
+    }
+
     constructor(canvas: HTMLCanvasElement, config: Config)
     {
         Screen._canvas = canvas;
-        this.SetSize(config.screenConfig.width, config.screenConfig.height);
-
-        this.SetupEventListeners();
-    }
-
-    private SetupEventListeners(): void
-    {
-        window.addEventListener('resize', () => this.OnResize(), false);
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        this.SetSize( Math.round(config.screenConfig.width * devicePixelRatio),  Math.round(config.screenConfig.height* devicePixelRatio));
     }
 
     public SetSize(width: number, height: number): void
@@ -33,32 +33,20 @@ export default class Screen
         Screen._canvas.height = height;
     }
 
-    public OnResize(): void
+    public static ResizeCheck(): void
     {
-        let height = 0;
-        let width = 0;
+        const gl = RenderingContext.instance.gl;
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        
+        const width = Math.round(gl.canvas.width * devicePixelRatio);
+        const height = Math.round(gl.canvas.height * devicePixelRatio);
 
-        if(this.GetWindowRatio() < this.GetRatio())
-        {
-            height = Screen._canvas.clientHeight;
-            width = height / this.GetRatio();
-        }
-        else
-        {
-            width = Screen._canvas.clientWidth;
-            height = width * this.GetRatio();
+        if (gl.canvas.width != width ||
+            gl.canvas.height != height) {
+           gl.canvas.width = width;
+           gl.canvas.height = height;
         }
 
-        this.SetSize(width, height);
-    }
-
-    public GetRatio(): number
-    {
-        return Screen.Height / Screen.Width;
-    }
-
-    public GetWindowRatio(): number
-    {
-        return window.innerHeight / window.innerWidth;
+        gl.viewport(0, 0, width, height);
     }
 }

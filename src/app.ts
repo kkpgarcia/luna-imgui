@@ -13,14 +13,15 @@ const loadMap = {
     ],
     shaders: [
         "basic.shader",
-        "transform.shader"
+        "transform.shader",
+        "grid.shader"
     ]
 }
 
 const configMap = {
     screen: {
-        width: 800,
-        height: 800
+        width: 2000,
+        height: 2000
     },
     system: {
         fps: 60

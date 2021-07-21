@@ -4,8 +4,8 @@ layout(location = 0) in vec4 a_position;
 layout(location = 1) in vec3 a_normal;
 // in vec2 a_texcoord;
 uniform mat4 u_Matrix;
+uniform mat4 u_WorldInverseTranspose;
 // uniform mat4 u_WorldViewProjection;
-// uniform mat4 u_World;
 
 // out vec2 v_texcoord;
 out vec3 v_normal;
@@ -13,7 +13,7 @@ out vec3 v_normal;
 void main() 
 {
     gl_Position = u_Matrix * a_position;
-    v_normal = a_normal;
+    v_normal = mat3(u_WorldInverseTranspose) * a_normal;
     // v_texcoord = a_texcoord;    
 }
 #vertex
