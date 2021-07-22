@@ -1,5 +1,4 @@
-import { Mat4x4 } from "@luna-engine/math";
-import Screen from "../Screen";
+import { Mat4x4, Screen } from "luna-engine";
 
 enum ProjectionType
 {

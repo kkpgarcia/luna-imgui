@@ -1,25 +1,22 @@
 // import { EventArgs, NotificationCenter } from "@luna-engine/events";
-import 
-{ 
-    Renderer,
-    RenderingContext, 
-    Shader, 
+
+import { 
     VertexArray, 
+    IndexBuffer,
+    Mat4x4, 
+    Renderer, 
+    Vector3, 
+    Services, 
     VertexBuffer, 
-    IndexBuffer, 
-    VertexBufferLayout,
-    // Texture
-} from "@luna-engine/renderer";
-import { SystemScheduler } from "@luna-engine/core";
-import { NotificationCenter, EventArgs } from "@luna-engine/events";
-// import Mat3x3 from "./engine-dev/Mat3x3";
-import { Vector3, Mat4x4 } from "@luna-engine/math";
-// import Mat4x4 from "./engine-dev/Mat4x4";
+    VertexBufferLayout, 
+    EventArgs, 
+    SystemScheduler ,
+    Screen,
+    Shader
+} from "luna-engine";
 import InputManager from "./engine-dev/InputManager";
-import AppCache, { CacheType } from "@luna-engine/utility/dist/AppCache";
 import Transform from "./engine-dev/Component/Transform";
 import CameraEntity from "./engine-dev/CameraEntity";
-import Screen from "./engine-dev/Screen";
 import { ViewportGrid } from "./engine-dev/ViewportGrid";
 
 export interface IRenderable
@@ -33,7 +30,6 @@ export default class Game
 {
     private matrix: Mat4x4;
     private _color: number[] = [0.2, 1, 0.2, 1];
-    // private _shader: Shader;
     
     private _numObjects = 10;
     private _radius = 15;
@@ -47,21 +43,22 @@ export default class Game
 
     private _renderables: IRenderable[];
 
+    private _worldPosition: Vector3 = new Vector3();
     private _worldRotation: Vector3 = new Vector3();
 
     constructor(canvas: HTMLCanvasElement)
     {
-        RenderingContext.instance.Init(canvas);
+        Services.RenderingContext.Init(canvas);
     }
 
     public async Start(): Promise<void>
     {
-        const gl = RenderingContext.instance.gl;
+        const gl = Services.RenderingContext.gl;
         
         //Move to rendering context
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
-        gl.enable(gl.DEPTH_TEST);
+
 
         this._renderables = [];
 
@@ -82,9 +79,7 @@ export default class Game
      
         const indexBuffer = new IndexBuffer(indices, indices.length);
      
-        const shaderSource = AppCache.instance.GetShader("transform.shader");
-        const shader = new Shader(shaderSource);
-        AppCache.instance.DisposeKey(CacheType.SHADER, "transform.shader");
+        const shader = new Shader("transform.shader");
      
         this._renderables.push({
             vao: vertexArray,
@@ -108,7 +103,7 @@ export default class Game
             this._transforms.push(new Transform());
         }
      
-        NotificationCenter.instance.AddObserver((args: EventArgs<number>) => this.Update(args.data), SystemScheduler.UPDATE_NOTIFICATION)
+        Services.NotificationCenter.AddObserver((args: EventArgs<number>) => this.Update(args.data), SystemScheduler.UPDATE_NOTIFICATION)
     }
 
     private Update(deltaTime: number): void
@@ -123,10 +118,10 @@ export default class Game
         Screen.ResizeCheck();
         this._renderer.Clear();
 
-        const worldMatrix = Mat4x4.Rotation(this._worldRotation);
+        const worldMatrix = Mat4x4.Translation(this._worldPosition).Multiply_i(Mat4x4.Rotation(this._worldRotation));
         const worldViewProjectionMatrix = Mat4x4.Multiply(this._cameraEntity.viewProjectionMatrix, worldMatrix);
         const worldInverseMatrix = Mat4x4.Inverse(worldMatrix);
-        const worldInverseTransposeMatrix = this.Transpose(worldInverseMatrix);
+        const worldInverseTransposeMatrix = Mat4x4.Transpose(worldInverseMatrix);
 
         for(let r = 0; r < this._renderables.length; r++)
         {
@@ -190,7 +185,7 @@ export default class Game
 
     private InputUpdate(deltaTime: number): void
     {
-        const speed = 200 * deltaTime;
+        const speed = 150 * deltaTime;
         if(InputManager.instance.onKeyDown("ArrowUp"))
         {
             this._worldRotation.x += speed;
@@ -208,6 +203,23 @@ export default class Game
         if(InputManager.instance.onKeyDown("ArrowRight"))
         {
             this._worldRotation.y += speed;
+        }
+
+        if(InputManager.instance.onKeyDown("w"))
+        {
+            this._worldPosition.z += speed;
+        }
+        if(InputManager.instance.onKeyDown("a"))
+        {
+            this._worldPosition.x += speed;
+        }
+        if(InputManager.instance.onKeyDown("s"))
+        {
+            this._worldPosition.z -= speed;
+        }
+        if(InputManager.instance.onKeyDown("d"))
+        {
+            this._worldPosition.x -= speed;
         }
     }
 
@@ -297,16 +309,6 @@ export default class Game
         }
 
         return retValue;
-    }
-
-    private Transpose(m: Mat4x4): Mat4x4
-    {
-        return new Mat4x4 (
-            m.Get(0), m.Get(4), m.Get(8), m.Get(12),
-            m.Get(1), m.Get(5), m.Get(9), m.Get(13),
-            m.Get(2), m.Get(6), m.Get(10), m.Get(14),
-            m.Get(3), m.Get(7), m.Get(11), m.Get(15),
-        );
     }
 
     // public LookAt(cameraPos: Vector3, target: Vector3, up: Vector3 = Vector3.UP): Mat4x4

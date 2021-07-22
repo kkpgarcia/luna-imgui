@@ -1,4 +1,4 @@
-import { Mat4x4 } from "@luna-engine/math";
+import { Mat4x4 } from "luna-engine";
 import Camera from "./Component/Camera";
 import Transform from "./Component/Transform";
 import Entity from "./Component/Entity";

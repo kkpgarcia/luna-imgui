@@ -1,5 +1,6 @@
-import { Resource, Directory, AppCache, CacheType } from "@luna-engine/utility";
-// import AppCache from "./AppCache";
+import { Services, Directory } from "luna-engine";
+import { CacheType } from "luna-engine/dist/Utility/AppCache";
+
 
 export default class Loader
 {
@@ -14,15 +15,15 @@ export default class Loader
 
         //Add textures
         let texLoaders = this.CreateLoaderArray(loadMap.textures, (name) => { 
-            Resource.instance.GetImage(Directory.TEXTURE_DIR, name, (data: any) => {
-                AppCache.instance.AddTexture(name, data);
+            Services.Resource.GetImage(Directory.TEXTURE_DIR, name, (data: any) => {
+                Services.AppCache.AddTexture(name, data);
             })
         });
         
         //Add shaders
         let shaderLoaders = this.CreateLoaderArray(loadMap.shaders, (name) => { 
-            Resource.instance.GetText(Directory.SHADER_DIR, name, (data: string) => {
-                AppCache.instance.AddShader(name, data);
+            Services.Resource.GetText(Directory.SHADER_DIR, name, (data: string) => {
+                Services.AppCache.AddShader(name, data);
             })
         }); 
  
@@ -41,8 +42,8 @@ export default class Loader
                 {
                     //Sanity check for resources
                     const allLoaded = 
-                        AppCache.instance.CheckContains(CacheType.TEXTURE, loadMap.textures) &&
-                        AppCache.instance.CheckContains(CacheType.SHADER, loadMap.shaders);;
+                        Services.AppCache.CheckContains(CacheType.TEXTURE, loadMap.textures) &&
+                        Services.AppCache.CheckContains(CacheType.SHADER, loadMap.shaders);;
 
                     if (allLoaded)
                     {

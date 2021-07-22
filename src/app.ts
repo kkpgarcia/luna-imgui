@@ -1,9 +1,8 @@
+import { Resource, AppCache, NotificationCenter, RenderingContext, Services, Config, SystemManager, Screen } from "luna-engine";
 import Loader from "./engine-dev/Loader";
 import Game from "./Game";
-import Screen from "./engine-dev/Screen";
 
-import { SystemManager } from "@luna-engine/core";
-import { Config } from "@luna-engine/utility";
+
 
 const loadMap = {
     textures: [
@@ -28,6 +27,13 @@ const configMap = {
     }
 }
 
+//Move to a better loader
+let resource = new Resource();
+let appCache = new AppCache();
+let notificationCenter = new NotificationCenter();
+let renderingContext = new RenderingContext();
+
+new Services(renderingContext, appCache, notificationCenter, resource);
 
 new Loader(
     loadMap,
@@ -40,8 +46,9 @@ new Loader(
         //Setup Window
         new Screen(canvas, config);
 
+
         //Start Systems
-        let systemManager = new SystemManager();
+        let systemManager = new SystemManager(config);
         systemManager.Start();
 
         let game = new Game(canvas);

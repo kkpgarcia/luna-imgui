@@ -1,4 +1,4 @@
-import { Mat4x4, Vector3 } from "@luna-engine/math";
+import { Mat4x4, Vector3 } from "luna-engine";
 
 export default class Transform
 {

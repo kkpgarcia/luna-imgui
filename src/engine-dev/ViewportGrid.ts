@@ -1,6 +1,5 @@
-import { Vector3 } from "@luna-engine/math";
-import { VertexArray, VertexBuffer, VertexBufferLayout, IndexBuffer, Shader, RenderingContext } from "@luna-engine/renderer";
-import { AppCache, CacheType } from "@luna-engine/utility";
+
+import { Services, VertexArray, VertexBuffer, VertexBufferLayout, IndexBuffer, Vector3, Shader } from "luna-engine";
 import { IRenderable } from "src/Game";
 
 export class ViewportGrid
@@ -13,7 +12,7 @@ export class ViewportGrid
 
     constructor()
     {
-        const gl = RenderingContext.instance.gl;
+        const gl = Services.RenderingContext.gl;
         const gridModel = this.Grid(100);
         const gridIndices = this.GridIndices(100);
 
@@ -26,9 +25,7 @@ export class ViewportGrid
 
         const gridIndexBuffer = new IndexBuffer(gridIndices, gridIndices.length);
 
-        const gridSource = AppCache.instance.GetShader("grid.shader");
-        const gridShader = new Shader(gridSource);
-        AppCache.instance.DisposeKey(CacheType.SHADER, "grid.shader");
+        const gridShader = new Shader("grid.shader");
 
         this._renderable = {
             vao: gridVertexArray,
