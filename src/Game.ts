@@ -1,42 +1,48 @@
 // import { EventArgs, NotificationCenter } from "@luna-engine/events";
 
 import { 
-    VertexArray, 
-    IndexBuffer,
+    // VertexArray, 
+    // IndexBuffer,
+    // Renderer, 
+    // VertexBuffer, 
+    // VertexBufferLayout, 
+    // Shader,
     Mat4x4, 
-    Renderer, 
     Vector3, 
     Services, 
-    VertexBuffer, 
-    VertexBufferLayout, 
     EventArgs, 
-    SystemScheduler ,
+    SystemScheduler,
     Screen,
-    Shader
+    // RenderingContext
 } from "luna-engine";
 import InputManager from "./engine-dev/InputManager";
 import Transform from "./engine-dev/Component/Transform";
 import CameraEntity from "./engine-dev/CameraEntity";
 import { ViewportGrid } from "./engine-dev/ViewportGrid";
 
+import IndexBuffer from "./engine-dev/Rendering/IndexBuffer";
+import Shader from "./engine-dev/Rendering/Shader";
+import Renderer from "./engine-dev/Rendering/Renderer";
+import VertexBuffer from "./engine-dev/Rendering/VertexBuffer";
+import VertexArray from "./engine-dev/Rendering/VertexArray";
+import VertexBufferLayout from "./engine-dev/Rendering/VertexBufferLayout";
+import Material from "./engine-dev/Rendering/Material";
+
 export interface IRenderable
 {
+    transform: Transform,
     vao: VertexArray,
     ibo: IndexBuffer,
-    shader: Shader
+    material: Material
+    // shader: Shader
 }
 
 export default class Game
 {
-    private matrix: Mat4x4;
     private _color: number[] = [0.2, 1, 0.2, 1];
     
-    private _numObjects = 10;
+    private _numObjects = 6;
     private _radius = 15;
-    private _transforms = [];
-    
-    //Cube
-    private _renderer: Renderer;
 
     //Grid
     private _cameraEntity: CameraEntity;
@@ -59,18 +65,18 @@ export default class Game
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
 
-
         this._renderables = [];
+
+        const grid = new ViewportGrid();
+        
+        this._renderables.push(grid.Renderable);
 
         //Cube
         const vertices = this.Cube();
         const normals = this.CalculateNormals(vertices);
         const indices = this.CubeIndices();
-
         const modelData = this.PreprocessBuffers(vertices, normals);
-
         const vertexArray = new VertexArray();
-        
         const vertexBuffer = new VertexBuffer(modelData);
         const layout = new VertexBufferLayout();
         layout.Push(3, gl.FLOAT);
@@ -78,31 +84,32 @@ export default class Game
         vertexArray.AddBuffer(vertexBuffer, layout);
      
         const indexBuffer = new IndexBuffer(indices, indices.length);
+        vertexArray.SetIndexBuffer(indexBuffer);
      
         const shader = new Shader("transform.shader");
-     
-        this._renderables.push({
-            vao: vertexArray,
-            ibo: indexBuffer,
-            shader: shader
-        });
+        const material = new Material(shader);
 
-        //Grid
-        const grid = new ViewportGrid();
-        
-        this._renderables.push(grid.Renderable);
+        for (let i = 0; i < this._numObjects; ++i)
+        {
+            const angle = i * Math.PI * 2 / this._numObjects;
+            const x = Math.cos(angle) * this._radius;
+            const z = Math.sin(angle) * this._radius;
 
-        this._renderer = new Renderer();
+            const transform = new Transform();
+            transform.Translate(new Vector3(x, 0, z))            
+            
+            this._renderables.push({
+                transform: transform,
+                vao: vertexArray,
+                ibo: indexBuffer,
+                material: material
+            });
+        }
 
         this._cameraEntity = new CameraEntity();
         this._cameraEntity.transform.Rotate(new Vector3(-20, 0, 0))
         this._cameraEntity.transform.Translate(new Vector3(0, 30, 40))
 
-        for (let i = 0; i < this._numObjects; i++)
-        {
-            this._transforms.push(new Transform());
-        }
-     
         Services.NotificationCenter.AddObserver((args: EventArgs<number>) => this.Update(args.data), SystemScheduler.UPDATE_NOTIFICATION)
     }
 
@@ -116,63 +123,26 @@ export default class Game
     private Draw(): void
     {
         Screen.ResizeCheck();
-        this._renderer.Clear();
+        Renderer.SetClearColor([0.15, 0.15, 0.15, 1]);
+        Renderer.Clear();
 
+        const viewProjectionMatrix = this._cameraEntity.viewProjectionMatrix;
         const worldMatrix = Mat4x4.Translation(this._worldPosition).Multiply_i(Mat4x4.Rotation(this._worldRotation));
-        const worldViewProjectionMatrix = Mat4x4.Multiply(this._cameraEntity.viewProjectionMatrix, worldMatrix);
-        const worldInverseMatrix = Mat4x4.Inverse(worldMatrix);
-        const worldInverseTransposeMatrix = Mat4x4.Transpose(worldInverseMatrix);
-
+        
         for(let r = 0; r < this._renderables.length; r++)
         {
-            const currShader = this._renderables[r].shader;
-            const currVAO = this._renderables[r].vao;
-            const currIBO = this._renderables[r].ibo;
+            const currTransform = this._renderables[r].transform;
+            const currMaterial = this._renderables[r].material;
+            const currVAO = this._renderables[r].vao;  
 
-            currShader.Bind();
-
-            //Quick creation of objects
-            if (r == 0)
-            {
-                for (let i = 0; i < this._numObjects; ++i)
-                {
-                    const angle = i * Math.PI * 2 / this._numObjects;
-                    const x = Math.cos(angle) * this._radius;
-                    const z = Math.sin(angle) * this._radius;
-
-                    const transform = this._transforms[i];
-                    transform.Translate(new Vector3(x, 0, z))
-
-                    transform.Rotate(
-                        new Vector3(
-                            transform.rotation.x + 1, 
-                            transform.rotation.y + 1, 
-                            transform.rotation.z + 1
-                    ));
-
-                    // this.matrix = Mat4x4.Multiply(worldViewProjectionMatrix, transform.matrix);//worldViewProjectionMatrix.Multiply_i(transform.matrix)
-                    this.matrix = Mat4x4.Multiply(worldViewProjectionMatrix, transform.matrix);//worldViewProjectionMatrix.Multiply_i(transform.matrix)
-                    
-                    currShader.SetUniform4fv("u_Color", this._color);
-                    currShader.SetUniformMatrix4fv("u_Matrix", false, this.matrix.ToArray());
-                    currShader.SetUniformMatrix4fv("u_WorldInverseTranspose", false, worldInverseTransposeMatrix.ToArray());
-                    let reverseLightDirection = new Vector3(0.2, 0.7, 1);
-                    currShader.SetUniform3fv("u_ReverseLightDirection",reverseLightDirection.Normalize().ToArray());
-                    
-                    this._renderer.Draw(currVAO, currIBO, currShader);
-                }
-            }
-            else
-            {
-                const gridMatrix = Mat4x4.Multiply(worldViewProjectionMatrix, Mat4x4.IDENTITY);
-                currShader.SetUniform4fv("u_Color", [0.5, 0.5, 0.5, 1]);
-                currShader.SetUniformMatrix4fv("u_Matrix", false, gridMatrix.ToArray());
-                this._renderer.Draw(currVAO, currIBO, currShader);
-            }
+            Renderer.Begin(viewProjectionMatrix,
+                            worldMatrix,
+                            currTransform.matrix,
+                            currMaterial);                    
+            Renderer.Draw(currVAO);
+            Renderer.End(currMaterial);
             
         }
-
-        
     }
 
     private UpdateColor(deltaTime: number): void
@@ -180,6 +150,29 @@ export default class Game
         this._color[0] = this._color[0] > 1 ? 0 : this._color[0] += 1 * deltaTime;
         this._color[1] = this._color[1] > 1 ? 0 : this._color[1] += 3 * deltaTime;
         this._color[2] = this._color[2] > 1 ? 0 : this._color[2] += 2 * deltaTime;
+
+        for(let r = 0; r < this._renderables.length; r++)
+        {
+            if (r === 0)
+            {
+                continue;
+            }
+
+            const currTransform = this._renderables[r].transform;
+            const currMaterial = this._renderables[r].material;
+
+            currTransform.Rotate(
+                new Vector3(
+                    currTransform.rotation.x + 1, 
+                    currTransform.rotation.y + 1, 
+                    currTransform.rotation.z + 1
+                ));
+                    
+            currMaterial.SetUniform("u_Color", this._color);
+            
+            let reverseLightDirection = new Vector3(0.2, 0.7, 1);
+            currMaterial.SetUniform("u_ReverseLightDirection", reverseLightDirection.Normalize().ToArray());
+        }
     }
 
 

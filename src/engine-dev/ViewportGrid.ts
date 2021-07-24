@@ -1,6 +1,15 @@
 
-import { Services, VertexArray, VertexBuffer, VertexBufferLayout, IndexBuffer, Vector3, Shader } from "luna-engine";
+// import { Services, VertexArray, VertexBuffer, VertexBufferLayout, IndexBuffer, Vector3, Shader } from "luna-engine";
 import { IRenderable } from "src/Game";
+
+import { Services, Vector3 } from "luna-engine";
+import IndexBuffer from "./Rendering/IndexBuffer";
+import Shader from "./Rendering/Shader";
+import VertexBuffer from "./Rendering/VertexBuffer";
+import VertexArray from "./Rendering/VertexArray";
+import VertexBufferLayout from "./Rendering/VertexBufferLayout";
+import Transform from "./Component/Transform";
+import Material from "./Rendering/Material";
 
 export class ViewportGrid
 {
@@ -25,12 +34,18 @@ export class ViewportGrid
 
         const gridIndexBuffer = new IndexBuffer(gridIndices, gridIndices.length);
 
+        gridVertexArray.SetIndexBuffer(gridIndexBuffer);
+
         const gridShader = new Shader("grid.shader");
+        const material = new Material(gridShader);
+
+        material.SetUniform("u_Color", [0.5, 0.5, 0.5, 1]);
 
         this._renderable = {
+            transform: new Transform(),
             vao: gridVertexArray,
             ibo: gridIndexBuffer,
-            shader: gridShader
+            material: material
         };
     }
 

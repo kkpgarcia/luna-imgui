@@ -2,12 +2,10 @@
 
 layout(location = 0) in vec4 a_position;
 layout(location = 1) in vec3 a_normal;
-// in vec2 a_texcoord;
+
 uniform mat4 u_Matrix;
 uniform mat4 u_WorldInverseTranspose;
-// uniform mat4 u_WorldViewProjection;
 
-// out vec2 v_texcoord;
 out vec3 v_normal;
 
 void main() 
@@ -22,12 +20,10 @@ void main()
 
 precision highp float;
 
-// in vec2 v_texcoord;
 in vec3 v_normal;
 
 uniform vec4 u_Color;
 uniform vec3 u_ReverseLightDirection;
-// uniform sampler2D u_Texture;
 
 out vec4 color;
 
