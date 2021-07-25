@@ -2,14 +2,15 @@
 // import { Services, VertexArray, VertexBuffer, VertexBufferLayout, IndexBuffer, Vector3, Shader } from "luna-engine";
 import { IRenderable } from "src/Game";
 
-import { Services, Vector3 } from "luna-engine";
-import IndexBuffer from "./Rendering/IndexBuffer";
+import { Vector3 } from "luna-engine";
+// import IndexBuffer from "./Rendering/IndexBuffer";
 import Shader from "./Rendering/Shader";
-import VertexBuffer from "./Rendering/VertexBuffer";
-import VertexArray from "./Rendering/VertexArray";
-import VertexBufferLayout from "./Rendering/VertexBufferLayout";
+// import VertexBuffer from "./Rendering/VertexBuffer";
+// import VertexArray from "./Rendering/VertexArray";
+// import VertexBufferLayout from "./Rendering/VertexBufferLayout";
 import Transform from "./Component/Transform";
 import Material from "./Rendering/Material";
+import Mesh from "./Rendering/Mesh";
 
 export class ViewportGrid
 {
@@ -21,20 +22,12 @@ export class ViewportGrid
 
     constructor()
     {
-        const gl = Services.RenderingContext.gl;
-        const gridModel = this.Grid(100);
-        const gridIndices = this.GridIndices(100);
-
-        const gridVertexArray = new VertexArray();
-
-        const gridBuffer = new VertexBuffer(gridModel);
-        const gridLayout = new VertexBufferLayout();
-        gridLayout.Push(3, gl.FLOAT);
-        gridVertexArray.AddBuffer(gridBuffer, gridLayout);
-
-        const gridIndexBuffer = new IndexBuffer(gridIndices, gridIndices.length);
-
-        gridVertexArray.SetIndexBuffer(gridIndexBuffer);
+        const mesh = new Mesh({
+            vertices: this.Grid(100),
+            indices: this.GridIndices(100),
+            colors: null,
+            normals: null
+        })
 
         const gridShader = new Shader("grid.shader");
         const material = new Material(gridShader);
@@ -43,9 +36,8 @@ export class ViewportGrid
 
         this._renderable = {
             transform: new Transform(),
-            vao: gridVertexArray,
-            ibo: gridIndexBuffer,
-            material: material
+            material: material,
+            mesh: mesh
         };
     }
 

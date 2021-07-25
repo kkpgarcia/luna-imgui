@@ -16,6 +16,7 @@ const loadMap = {
         "basic.shader",
         "transform.shader",
         "grid.shader",
+        "text.shader"
     ]
 }
 

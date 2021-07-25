@@ -20,20 +20,22 @@ import Transform from "./engine-dev/Component/Transform";
 import CameraEntity from "./engine-dev/CameraEntity";
 import { ViewportGrid } from "./engine-dev/ViewportGrid";
 
-import IndexBuffer from "./engine-dev/Rendering/IndexBuffer";
+// import IndexBuffer from "./engine-dev/Rendering/IndexBuffer";
 import Shader from "./engine-dev/Rendering/Shader";
 import Renderer from "./engine-dev/Rendering/Renderer";
-import VertexBuffer from "./engine-dev/Rendering/VertexBuffer";
-import VertexArray from "./engine-dev/Rendering/VertexArray";
-import VertexBufferLayout from "./engine-dev/Rendering/VertexBufferLayout";
+// import VertexBuffer from "./engine-dev/Rendering/VertexBuffer";
+// import VertexArray from "./engine-dev/Rendering/VertexArray";
+// import VertexBufferLayout from "./engine-dev/Rendering/VertexBufferLayout";
 import Material from "./engine-dev/Rendering/Material";
+import Mesh from "./engine-dev/Rendering/Mesh";
 
 export interface IRenderable
 {
     transform: Transform,
-    vao: VertexArray,
-    ibo: IndexBuffer,
-    material: Material
+    // vao: VertexArray,
+    // ibo: IndexBuffer,
+    material: Material,
+    mesh: Mesh
     // shader: Shader
 }
 
@@ -68,24 +70,15 @@ export default class Game
         this._renderables = [];
 
         const grid = new ViewportGrid();
-        
         this._renderables.push(grid.Renderable);
 
         //Cube
-        const vertices = this.Cube();
-        const normals = this.CalculateNormals(vertices);
-        const indices = this.CubeIndices();
-        const modelData = this.PreprocessBuffers(vertices, normals);
-        
-        const vertexArray = new VertexArray();
-        const vertexBuffer = new VertexBuffer(modelData);
-        const layout = new VertexBufferLayout();
-        layout.Push(3, gl.FLOAT);
-        layout.Push(3, gl.FLOAT);
-        vertexArray.AddBuffer(vertexBuffer, layout);
-     
-        const indexBuffer = new IndexBuffer(indices, indices.length);
-        vertexArray.SetIndexBuffer(indexBuffer);
+        const mesh = new Mesh({
+            vertices: this.Cube(),
+            normals: this.CalculateNormals(this.Cube()),
+            indices: this.CubeIndices(),
+            colors: null
+        })
      
         const shader = new Shader("transform.shader");
         const material = new Material(shader);
@@ -101,9 +94,8 @@ export default class Game
             
             this._renderables.push({
                 transform: transform,
-                vao: vertexArray,
-                ibo: indexBuffer,
-                material: material
+                material: material,
+                mesh: mesh
             });
         }
 
@@ -134,7 +126,7 @@ export default class Game
         {
             const currTransform = this._renderables[r].transform;
             const currMaterial = this._renderables[r].material;
-            const currVAO = this._renderables[r].vao;  
+            const currVAO = this._renderables[r].mesh.vertexArrayObject;  
 
             Renderer.Begin(viewProjectionMatrix,
                             worldMatrix,
@@ -284,26 +276,26 @@ export default class Game
         return retValue;
     }
 
-    public PreprocessBuffers(position: number[], normals: number[]): number[]
-    {
-        let retValue = [];
-        const maxLength = position.length + normals.length;
+    // public PreprocessBuffers(position: number[], normals: number[]): number[]
+    // {
+    //     let retValue = [];
+    //     const maxLength = position.length + normals.length;
 
-        for (let i = 0; i < maxLength; i += 6)
-        {
-            const currentIndex = i / 2;
+    //     for (let i = 0; i < maxLength; i += 6)
+    //     {
+    //         const currentIndex = i / 2;
 
-            retValue[i + 0] = position[currentIndex + 0];
-            retValue[i + 1] = position[currentIndex + 1];
-            retValue[i + 2] = position[currentIndex + 2];
+    //         retValue[i + 0] = position[currentIndex + 0];
+    //         retValue[i + 1] = position[currentIndex + 1];
+    //         retValue[i + 2] = position[currentIndex + 2];
             
-            retValue[i + 3] = normals[currentIndex + 0];
-            retValue[i + 4] = normals[currentIndex + 1];
-            retValue[i + 5] = normals[currentIndex + 2];
-        }
+    //         retValue[i + 3] = normals[currentIndex + 0];
+    //         retValue[i + 4] = normals[currentIndex + 1];
+    //         retValue[i + 5] = normals[currentIndex + 2];
+    //     }
 
-        return retValue;
-    }
+    //     return retValue;
+    // }
 
     // public LookAt(cameraPos: Vector3, target: Vector3, up: Vector3 = Vector3.UP): Mat4x4
     // {
