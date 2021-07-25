@@ -76,6 +76,7 @@ export default class Game
         const normals = this.CalculateNormals(vertices);
         const indices = this.CubeIndices();
         const modelData = this.PreprocessBuffers(vertices, normals);
+        
         const vertexArray = new VertexArray();
         const vertexBuffer = new VertexBuffer(modelData);
         const layout = new VertexBufferLayout();

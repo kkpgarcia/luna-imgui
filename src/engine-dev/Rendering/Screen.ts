@@ -8,17 +8,17 @@ export default class Screen
 
     public static get Width(): number
     {
-        return this._canvas.width;
+        return Screen._canvas.width;
     }
 
     public static get Height(): number
     {
-        return this._canvas.height;
+        return Screen._canvas.height;
     }
 
     public static get Aspect(): number
     {
-        return this._canvas.clientWidth / this._canvas.clientHeight;
+        return Screen._canvas.clientWidth / Screen._canvas.clientHeight;
     }
 
     constructor(canvas: HTMLCanvasElement, config: Config)

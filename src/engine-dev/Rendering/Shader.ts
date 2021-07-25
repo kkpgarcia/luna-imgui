@@ -2,7 +2,7 @@
 // import { CacheType } from "../Utility/AppCache";
 // import Debug from "../Core/Debug/Debug";
 import { Services, Debug } from "luna-engine";
-import { CacheType } from "luna-engine/dist/Utility/AppCache";
+// import { CacheType } from "luna-engine/dist/Utility/AppCache";
 
 export default class Shader
 { 
@@ -15,12 +15,14 @@ export default class Shader
         this._uniformLocationCache = new Map<string, WebGLUniformLocation>();
         this._availableUniforms = new Map<string, string>();
 
+        
         const cached = Services.AppCache.GetShader(source);
         const parsed = this.ParseShader(cached);
+        console.log(parsed);
 
         this._shader = this.CreateProgram(parsed[0], parsed[1]);
 
-        Services.AppCache.DisposeKey(CacheType.SHADER, source);
+        // Services.AppCache.DisposeKey(CacheType.SHADER, source);
     }
 
     private CreateProgram(vertexSource: string, fragmentSource: string): WebGLProgram
@@ -234,6 +236,8 @@ export default class Shader
 
         const location = gl.getUniformLocation(this._shader, name);
         
+        // console.log(this.HasUniform);
+
         if (!location)
         {
             Debug.Error("Uniform " + name + " doesn't exists");
@@ -246,6 +250,7 @@ export default class Shader
 
     public HasUniform(name: string): boolean
     {
+        
         return this._availableUniforms.has(name);
     }
 

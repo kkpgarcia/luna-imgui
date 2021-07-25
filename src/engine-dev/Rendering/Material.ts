@@ -1,4 +1,6 @@
+// import { Mat4x4, Services } from "luna-engine";
 import Shader from "./Shader";
+// import * as TextureUtils from "./TextureUtils";//from "./TextureUtils";
 
 // export class MaterialProperties
 // {
@@ -11,8 +13,25 @@ export default class Material
 
     constructor(shader: Shader)
     {
+        // const gl = Services.RenderingContext.gl;
         this._shader = shader;
         this._properties = new Map<string, number | number[]>();
+
+        //Initialized Uniforms
+        // this.SetUniform("u_worldViewProjection", Mat4x4.IDENTITY.ToArray());
+        // this.SetUniform("u_lightWorldPos", new Vector3(100, 200, 300).ToArray());
+        // this.SetUniform("u_world", Mat4x4.IDENTITY.ToArray());
+        // this.SetUniform("u_worldViewProjection", Mat4x4.IDENTITY.ToArray());
+        // this.SetUniform("u_lightWorldPos", [100, 200, 300]);
+        // this.SetUniform("u_world", Mat4x4.IDENTITY.ToArray());
+        // this.SetUniform("u_viewInverse", Mat4x4.IDENTITY.ToArray());
+        // this.SetUniform("u_worldInverseTranspose", Mat4x4.IDENTITY.ToArray());
+        // this.SetUniform("u_lightColor", [1, 1, 1, 1]);
+        // this.SetUniform("u_ambient", [0.1, 0.1, 0.1, 1]);
+        // this.SetUniform("u_diffuse", TextureUtils.textureUtils.makeCheckerTexture(gl, { color1: "#FFF", color2: "#CCC", }));
+        // this.SetUniform("u_specular", [1, 1, 1, 1]);
+        // this.SetUniform("u_shininess", 60);
+        // this.SetUniform("u_specularFactor", 1);
     }
 
     public Bind(): void
