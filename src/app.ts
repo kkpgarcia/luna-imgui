@@ -24,7 +24,7 @@ const configMap = {
     screen: {
         width: 2000,
         height: 2000
-    },
+},
     system: {
         fps: 10
     }

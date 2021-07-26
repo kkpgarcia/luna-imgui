@@ -1,21 +1,15 @@
-import { Services, /*Mat4x4,*/ SystemScheduler, Screen, Mat3x3, Vector2, Mat4x4 } from "luna-engine";
+import { Services, /*Mat4x4,*/ SystemScheduler, Screen, Vector3, Mat4x4 } from "luna-engine";
 
-import VertexArray from "./engine-dev/Rendering/VertexArray";
-import IndexBuffer from "./engine-dev/Rendering/IndexBuffer";
-import VertexBuffer from "./engine-dev/Rendering/VertexBuffer";
-import VertexBufferLayout from "./engine-dev/Rendering/VertexBufferLayout";
-import Material from "./engine-dev/Rendering/Material";
 import Shader from "./engine-dev/Rendering/Shader";
 import Renderer from "./engine-dev/Rendering/Renderer";
 import Transform from "./engine-dev/Component/Transform";
+import Mesh from "./engine-dev/Rendering/Mesh";
 
 interface RenderObject
 {
-    vao: VertexArray,
-    mat: Material,
     transform: Transform,
     shader: Shader,
-    // texture: WebGLTexture
+    mesh: Mesh
 }
 
 export default class ImguiSandbox
@@ -30,24 +24,19 @@ export default class ImguiSandbox
 
     public Start()
     {
-        const gl = Services.RenderingContext.gl;
         const radius = 50;
         const vertices = this.CreateRoundedRectangle(800, 800, radius);
-        const indices = this.CreateIndices(radius);
 
-        const vertexArray = new VertexArray();
-        const vertexBuffer = new VertexBuffer(vertices);
-        const layout = new VertexBufferLayout();
-        layout.Push(2, gl.FLOAT);
-        layout.Push(4, gl.FLOAT);
-        // layout.Push(2, gl.FLOAT);
-        vertexArray.AddBuffer(vertexBuffer, layout);
+        const mesh = new Mesh({
+            vertices: vertices,
+            indices: this.CreateIndices(radius),
+            colors: this.CreateColors(vertices.length),
+            normals: null
+        });
 
-        const indexBuffer = new IndexBuffer(indices, indices.length);
-        vertexArray.SetIndexBuffer(indexBuffer);
         
         const shader = new Shader("imgui.shader");
-        const material = new Material(shader);
+        // const material = new Material(shader);
 
         // material.SetUniform("u_Color", [0, 0, 0, 0.8]);
 
@@ -55,14 +44,12 @@ export default class ImguiSandbox
         // transform.Scale(new Vector3(1, 1, 1));
 
         this._renderables.push({
-            vao: vertexArray,
-            mat: material,
             transform: transform,
-            shader: shader
+            shader: shader,
+            mesh: mesh
         });
 
         // this.CreateText();
-
 
         Services.NotificationCenter.AddObserver((evt) => this.Update(evt.data), SystemScheduler.UPDATE_NOTIFICATION);
     }
@@ -82,18 +69,18 @@ export default class ImguiSandbox
         this._renderables.forEach(element => {
             // Renderer.Begin(Mat4x4.Orthographic(0, Screen.Width, Screen.Height, 0, 400, -400), Mat4x4.IDENTITY, element.transform.matrix, element.mat);
 
-            let matrix = Mat3x3.Translation(new Vector2(Screen.Width/2, Screen.Height/2));
-                matrix = Mat3x3.Multiply(matrix, Mat3x3.Rotation(0));
-                matrix = Mat3x3.Multiply(matrix, Mat3x3.Scaling(new Vector2(1000, -1000)));
-                matrix = Mat3x3.Multiply(matrix, Mat3x3.Scaling(new Vector2(1, 1)));
+            let matrix = Mat4x4.Translation(new Vector3(Screen.Width/2, Screen.Height/2));
+                matrix = Mat4x4.Multiply(matrix, Mat4x4.Rotation(Vector3.ZERO));
+                matrix = Mat4x4.Multiply(matrix, Mat4x4.Scaling(new Vector3(1000, -1000)));
+                matrix = Mat4x4.Multiply(matrix, Mat4x4.Scaling(new Vector3(1, 1)));
 
             element.shader.Bind();
             
             element.shader.SetUniformMatrix4fv("u_Projection", false, projection.ToArray());
-            element.shader.SetUniformMatrix3fv("u_Matrix", false, matrix.ToArray());
+            element.shader.SetUniformMatrix4fv("u_Matrix", false, matrix.ToArray());
 
-            Renderer.Draw(element.vao);
-            Renderer.End(element.mat)
+            Renderer.Draw(element.mesh.vertexArrayObject);
+            // Renderer.End(element.mat)
         });
     }
 
@@ -172,39 +159,39 @@ export default class ImguiSandbox
 
         let retValue = [
             //Main Box
-            -width, -height, 0, 0, 0, 0.5, 
-             width, -height, 0, 0, 0, 0.5, 
-             width,  height, 0, 0, 0, .5,  
-            -width,  height, 0, 0, 0, .5,  
+            -width, -height, 0, 
+             width, -height, 0, 
+             width,  height, 0, 
+            -width,  height, 0, 
             //Upper
-            -width, -height + yOffset, 0, 0, 0, 0.5, 
-             width, -height + yOffset, 0, 0, 0, 0.5, 
-             width,  height + yOffset, 0, 0, 0, .5,  
-            -width,  height + yOffset, 0, 0, 0, .5,  
+            -width, -height + yOffset, 0,
+             width, -height + yOffset, 0,
+             width,  height + yOffset, 0,
+            -width,  height + yOffset, 0,
             //lower
-            -width, -height - yOffset, 0, 0, 0, 0.5, 
-             width, -height - yOffset, 0, 0, 0, 0.5, 
-             width,  height - yOffset, 0, 0, 0, .5,  
-            -width,  height - yOffset, 0, 0, 0, .5,  
+            -width, -height - yOffset, 0,
+             width, -height - yOffset, 0,
+             width,  height - yOffset, 0,
+            -width,  height - yOffset, 0,
             //Right
-            -width + xOffset, -height, 0, 0, 0, 0.5, 
-             width + xOffset, -height, 0, 0, 0, 0.5, 
-             width + xOffset,  height, 0, 0, 0, .5,  
-            -width + xOffset,  height, 0, 0, 0, .5,  
+            -width + xOffset, -height, 0,
+             width + xOffset, -height, 0,
+             width + xOffset,  height, 0,
+            -width + xOffset,  height, 0,
             //Left
-            -width - xOffset, -height, 0, 0, 0, 0.5, 
-             width - xOffset, -height, 0, 0, 0, 0.5, 
-             width - xOffset,  height, 0, 0, 0, .5,  
-            -width - xOffset,  height, 0, 0, 0, .5,  
+            -width - xOffset, -height, 0,
+             width - xOffset, -height, 0,
+             width - xOffset,  height, 0,
+            -width - xOffset,  height, 0,
         ]
 
         const numPoints = Math.floor(radius / 10);
 
         const quadrants = [
-            [width, height, 0, 0, 0, 0.5],
-            [-width, height, 0, 0, 0, 0.5],
-            [-width, -height, 0, 0, 0, 0.5],
-            [width, -height, 0, 0, 0, 0.5]
+            [width, height, 0],
+            [-width, height, 0],
+            [-width, -height, 0],
+            [width, -height, 0]
         ]
 
         let toConcat = [];
@@ -225,10 +212,7 @@ export default class ImguiSandbox
                 toConcat = toConcat.concat([
                     x + currQuadrant[0],
                     y + currQuadrant[1],
-                    currQuadrant[2],
-                    currQuadrant[3],
-                    currQuadrant[4],
-                    currQuadrant[5]
+                    0
                 ]);
             }
         }
@@ -275,6 +259,21 @@ export default class ImguiSandbox
         }
 
         return retValue;
+    }
+
+    private CreateColors(length: number): number[]
+    {
+        let retVal = [];
+
+        for(let i = 0; i < length; i++) 
+        {
+            retVal.push(0);
+            retVal.push(0);
+            retVal.push(0);
+            retVal.push(0.5);
+        }
+
+        return retVal;
     }
 
     public DegreeToRad(angle: number): number

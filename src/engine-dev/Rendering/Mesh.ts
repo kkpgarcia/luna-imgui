@@ -27,9 +27,11 @@ export default class Mesh
         this._vertexArrayObject = new VertexArray();
 
         //TODO: Add colors to preprocess buffers
-        const combinedBuffers = this.PreprocessBuffers(data.vertices, data.normals);
+        const combinedBuffers = this.PreprocessBuffers(data.vertices, data.normals, data.colors);
         const vertexBuffer = new VertexBuffer(combinedBuffers);
         const layout = new VertexBufferLayout();
+
+        console.log(combinedBuffers);
 
         //TODO: Automatically check for data layout
         if (data.vertices) layout.Push(3, gl.FLOAT);
@@ -42,25 +44,29 @@ export default class Mesh
         this._vertexArrayObject.SetIndexBuffer(indexBuffer);
     }
 
-    private PreprocessBuffers(position: number[], normals: number[]): number[]
+    private PreprocessBuffers(position: number[], normals: number[], colors: number[]): number[]
     {
-        if (!normals) return position;
-        
         let retValue = [];
-        const maxLength = position.length + normals.length;
 
-
-        for (let i = 0; i < maxLength; i += 6)
+        for (let i = 0, vIdx = 0, nIdx = 0, cIdx = 0; i < position.length; i += 3)
         {
-            const currentIndex = i / 2;
-
-            retValue[i + 0] = position[currentIndex + 0];
-            retValue[i + 1] = position[currentIndex + 1];
-            retValue[i + 2] = position[currentIndex + 2];
+            if (position)
+            {
+                for (let j = vIdx; j < vIdx + 3; j++) retValue.push(position[j]);
+                vIdx += 3;
+            }
             
-            retValue[i + 3] = normals[currentIndex + 0];
-            retValue[i + 4] = normals[currentIndex + 1];
-            retValue[i + 5] = normals[currentIndex + 2];
+            if (normals)
+            {
+                for (let j = nIdx; j < nIdx + 3; j++) retValue.push(normals[j]);
+                nIdx += 3;
+            }
+            
+            if (colors)
+            {   
+                for (let j = cIdx; j < cIdx + 4; j++) retValue.push(colors[j]);
+                cIdx += 4;
+            }
         }
 
         return retValue;
