@@ -3,6 +3,7 @@ import { Mat4x4, Services } from "luna-engine";
 import Material from "./Material";
 // import Shader from "./Shader";
 import VertexArray from "./VertexArray";
+import { Screen } from "luna-engine";
 
 //TODO: decide if it's a centralized renderer or
 //      or derivable 
@@ -18,17 +19,23 @@ export default class Renderer
      */
     public static Begin(viewProjectionMatrix: Mat4x4, worldMatrix: Mat4x4, transformMatrix: Mat4x4, material: Material): void
     {
-        //TODO: Temp
-        // shader.Bind();
         material.Bind();
 
-        const worldInverseMatrix = Mat4x4.Inverse(worldMatrix);
-        const worldInverseTransposeMatrix = Mat4x4.Transpose(worldInverseMatrix);
-        const modelMatrix = Mat4x4.Multiply(worldMatrix, transformMatrix);
-        const mvpMatrix = Mat4x4.Multiply(viewProjectionMatrix, modelMatrix);
-
-        material.SetUniform("u_Matrix", mvpMatrix.ToArray());
-        material.SetUniform("u_WorldInverseTranspose", worldInverseTransposeMatrix.ToArray());
+        //TODO: Temporary Solution
+        if(material.orthographic)
+        {
+            material.SetUniform("u_Projection", Mat4x4.Orthographic(0, Screen.Width, Screen.Height, 0, 0, 400).ToArray())
+            material.SetUniform("u_Matrix", transformMatrix.ToArray());
+        }
+        else
+        {
+            const worldInverseMatrix = Mat4x4.Inverse(worldMatrix);
+            const worldInverseTransposeMatrix = Mat4x4.Transpose(worldInverseMatrix);
+            const modelMatrix = Mat4x4.Multiply(worldMatrix, transformMatrix);
+            const mvpMatrix = Mat4x4.Multiply(viewProjectionMatrix, modelMatrix);
+            material.SetUniform("u_Matrix", mvpMatrix.ToArray());
+            material.SetUniform("u_WorldInverseTranspose", worldInverseTransposeMatrix.ToArray());
+        }
     }
 
     /**

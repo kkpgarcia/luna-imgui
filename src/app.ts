@@ -1,7 +1,6 @@
 import { Resource, AppCache, NotificationCenter, RenderingContext, Services, Config, SystemManager, Screen } from "luna-engine";
 import Loader from "./engine-dev/Loader";
 import Game from "./Game";
-import ImguiSandbox from "./ImguiSandbox";
 
 
 
@@ -9,7 +8,8 @@ const loadMap = {
     textures: [
         "images.jpg",
         "test.png",
-        "luna-logo.png"
+        "luna-logo.png",
+        "Arial.png"
     ],
     shaders: [
         "imgui.shader",
@@ -17,7 +17,10 @@ const loadMap = {
         "transform.shader",
         "grid.shader",
         "text.shader"
-    ]
+    ],
+    // fonts: [
+    //     "Arial.png"
+    // ]
 }
 
 const configMap = {
@@ -55,9 +58,6 @@ new Loader(
 
         let game = new Game(canvas);
         game.Start();
-
-        let imguiSandbox = new ImguiSandbox(canvas);
-        imguiSandbox.Start();
     },
     (msg: string) => {
         console.error(msg);

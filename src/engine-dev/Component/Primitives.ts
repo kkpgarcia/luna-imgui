@@ -5,7 +5,8 @@ export enum PrimitiveType
 {
     PLANE,
     ROUNDED_PLANE,
-    CUBE
+    CUBE,
+    LINE
 }
 
 export default class Primitives
@@ -35,6 +36,10 @@ export default class Primitives
                     calculateNormals: true
                 }
                 break;
+            // case PrimitiveType.LINE:
+            //     meshData = {
+
+            //     }
         }
 
         return new Mesh(meshData);

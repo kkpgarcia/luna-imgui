@@ -1,15 +1,17 @@
-import { Services, /*Mat4x4,*/ SystemScheduler, Screen, Vector3, Mat4x4 } from "luna-engine";
+import { Services, /*Mat4x4,*/ SystemScheduler, Screen, Mat4x4, Vector3 } from "luna-engine";
 
 import Shader from "./engine-dev/Rendering/Shader";
 import Renderer from "./engine-dev/Rendering/Renderer";
 import Transform from "./engine-dev/Component/Transform";
 import Mesh from "./engine-dev/Rendering/Mesh";
 import Primitives, { PrimitiveType } from "./engine-dev/Component/Primitives";
+import Material/*, { RenderFlag }*/ from "./engine-dev/Rendering/Material";
 
 interface RenderObject
 {
     transform: Transform,
-    shader: Shader,
+    // shader: Shader,
+    material: Material
     mesh: Mesh
 }
 
@@ -29,15 +31,20 @@ export default class ImguiSandbox
         const mesh = Primitives.Create(PrimitiveType.ROUNDED_PLANE, [800, 800, radius]);
 
         const shader = new Shader("imgui.shader");
-        // const material = new Material(shader);
+        const material = new Material(shader);
+        material.SetOrtographic(true);
         // material.SetUniform("u_Color", [0, 0, 0, 0.8]);
 
         const transform = new Transform();
+
+        transform.Translate(new Vector3(Screen.Width/2, Screen.Height/2));
+        transform.Scale(new Vector3(1000, -1000, 0));
         // transform.Scale(new Vector3(1, 1, 1));
 
         this._renderables.push({
             transform: transform,
-            shader: shader,
+            // shader: shader,,
+            material: material,
             mesh: mesh
         });
 
@@ -53,26 +60,12 @@ export default class ImguiSandbox
 
     private Draw(): void
     {
-        let projection = Mat4x4.Orthographic(0, Screen.Width, Screen.Height, 0, 0, 400);
-        // let view = Mat4x4.Translation(new Vector3(, 0, 0));
-        // let viewProjection = Mat4x4.Multiply(projection, view);
-
+        // let projection = Mat4x4.Orthographic(0, Screen.Width, Screen.Height, 0, 0, 400);
 
         this._renderables.forEach(element => {  
-            // Renderer.Begin(Mat4x4.Orthographic(0, Screen.Width, Screen.Height, 0, 400, -400), Mat4x4.IDENTITY, element.transform.matrix, element.mat);
-
-            let matrix = Mat4x4.Translation(new Vector3(Screen.Width/2, Screen.Height/2));
-                matrix = Mat4x4.Multiply(matrix, Mat4x4.Rotation(Vector3.ZERO));
-                matrix = Mat4x4.Multiply(matrix, Mat4x4.Scaling(new Vector3(1000, -1000)));
-                matrix = Mat4x4.Multiply(matrix, Mat4x4.Scaling(new Vector3(1, 1)));
-
-            element.shader.Bind();
-            
-            element.shader.SetUniformMatrix4fv("u_Projection", false, projection.ToArray());
-            element.shader.SetUniformMatrix4fv("u_Matrix", false, matrix.ToArray());
-
+            Renderer.Begin(Mat4x4.IDENTITY, Mat4x4.IDENTITY, element.transform.matrix, element.material);
             Renderer.Draw(element.mesh.vertexArrayObject);
-            // Renderer.End(element.mat)
+            Renderer.End(element.material)
         });
     }
 

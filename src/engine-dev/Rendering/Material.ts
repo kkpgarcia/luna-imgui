@@ -1,4 +1,5 @@
 // import { Mat4x4, Services } from "luna-engine";
+import { Services } from "luna-engine";
 import Shader from "./Shader";
 // import * as TextureUtils from "./TextureUtils";//from "./TextureUtils";
 
@@ -6,47 +7,45 @@ import Shader from "./Shader";
 // {
 // }
 
+export enum RenderFlag
+{
+    DEPTH_BUFFER,
+    CULL_FACE
+}
+
 export default class Material
 {
     private _shader: Shader;
     private _properties: Map<string, number | number[]>;
+    
+    //TODO: Temporary
+    private _orthographic: boolean;
+    public get orthographic(): boolean
+    {
+        return this._orthographic;
+    }
+
+    public _flags: number[];
 
     constructor(shader: Shader)
     {
         // const gl = Services.RenderingContext.gl;
         this._shader = shader;
         this._properties = new Map<string, number | number[]>();
-
-        //Initialized Uniforms
-        // this.SetUniform("u_worldViewProjection", Mat4x4.IDENTITY.ToArray());
-        // this.SetUniform("u_lightWorldPos", new Vector3(100, 200, 300).ToArray());
-        // this.SetUniform("u_world", Mat4x4.IDENTITY.ToArray());
-        // this.SetUniform("u_worldViewProjection", Mat4x4.IDENTITY.ToArray());
-        // this.SetUniform("u_lightWorldPos", [100, 200, 300]);
-        // this.SetUniform("u_world", Mat4x4.IDENTITY.ToArray());
-        // this.SetUniform("u_viewInverse", Mat4x4.IDENTITY.ToArray());
-        // this.SetUniform("u_worldInverseTranspose", Mat4x4.IDENTITY.ToArray());
-        // this.SetUniform("u_lightColor", [1, 1, 1, 1]);
-        // this.SetUniform("u_ambient", [0.1, 0.1, 0.1, 1]);
-        // this.SetUniform("u_diffuse", TextureUtils.textureUtils.makeCheckerTexture(gl, { color1: "#FFF", color2: "#CCC", }));
-        // this.SetUniform("u_specular", [1, 1, 1, 1]);
-        // this.SetUniform("u_shininess", 60);
-        // this.SetUniform("u_specularFactor", 1);
+        this._flags = [];
     }
 
     public Bind(): void
     {
         this._shader.Bind();
 
+        this.ApplyFlags(true);
+
         for (let i = 0; i < this._properties.size; i++)
         {
             const propertyName = Array.from(this._properties.keys())[i];
             
-            if (!this._shader.HasUniform(propertyName))
-            {
-                // console.log("Hello");
-                continue;
-            }
+            if (!this._shader.HasUniform(propertyName)) continue;
 
             const propertyData = this._properties.get(propertyName);
             const uniformType = this._shader.GetUniformType(propertyName);
@@ -85,16 +84,49 @@ export default class Material
 
     public Unbind(): void
     {
+        this.ApplyFlags(false);
         this._shader.Unbind();
     }
 
-    public SetFlag(): void
+    public SetOrtographic(value: boolean): void
     {
+        this._orthographic = value;
+    }
 
+    public SetFlag(flag: number): void
+    {
+        this._flags.push(this.GetFlag(flag));
     }
 
     public SetUniform(name: string, data: number | number[]): void
     {
         this._properties.set(name, data);
+    }
+
+    public GetFlag(flag: RenderFlag): number
+    {
+        const gl = Services.RenderingContext.gl;
+
+        switch(flag)
+        {
+            case RenderFlag.DEPTH_BUFFER: return gl.DEPTH_BUFFER_BIT;
+            case RenderFlag.CULL_FACE: return gl.CULL_FACE;
+        }
+    }
+
+    private ApplyFlags(apply: boolean): void
+    {
+        const gl = Services.RenderingContext.gl;
+
+        this._flags.forEach(element => {
+            if (apply)
+            {
+                gl.enable(element);
+            }
+            else
+            {
+                gl.disable(element);
+            }
+        });
     }
 }

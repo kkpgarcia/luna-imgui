@@ -13,11 +13,11 @@ import Transform from "./engine-dev/Component/Transform";
 import CameraEntity from "./engine-dev/CameraEntity";
 import { ViewportGrid } from "./engine-dev/ViewportGrid";
 
-import Shader from "./engine-dev/Rendering/Shader";
 import Renderer from "./engine-dev/Rendering/Renderer";
 import Material from "./engine-dev/Rendering/Material";
 import Mesh from "./engine-dev/Rendering/Mesh";
-import Primitives, { PrimitiveType } from "./engine-dev/Component/Primitives";
+import ImguiBox from "./engine-dev/ImguiBox";
+import RotatingCube from "./engine-dev/RotatingCube";
 
 export interface IRenderable
 {
@@ -29,8 +29,6 @@ export interface IRenderable
 export default class Game
 {
     private _renderables: IRenderable[];
-
-    private _color: number[] = [0.2, 1, 0.2, 1];
     
     private _numObjects = 6;
     private _radius = 15;
@@ -49,37 +47,33 @@ export default class Game
     public async Start(): Promise<void>
     {
         const gl = Services.RenderingContext.gl;
+        // gl.enable(gl.DEPTH_BUFFER_BIT);
         
         //Move to rendering context
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.enable(gl.CULL_FACE);
 
         this._renderables = [];
 
+        //Grid
         const grid = new ViewportGrid();
         this._renderables.push(grid.Renderable);
-
-        //Cube
-        const mesh = Primitives.Create(PrimitiveType.CUBE, null);
-     
-        const shader = new Shader("transform.shader");
-        const material = new Material(shader);
-
+        
+        //Cubes
         for (let i = 0; i < this._numObjects; ++i)
         {
             const angle = i * Math.PI * 2 / this._numObjects;
             const x = Math.cos(angle) * this._radius;
             const z = Math.sin(angle) * this._radius;
 
-            const transform = new Transform();
-            transform.Translate(new Vector3(x, 0, z))            
+            const cube = new RotatingCube();
+            cube.transform.Translate(new Vector3(x, 0, z));  
             
-            this._renderables.push({
-                transform: transform,
-                material: material,
-                mesh: mesh
-            });
+            this._renderables.push(cube.renderable);
         }
+
+        //Imgui
+        const imgui = new ImguiBox();
+        this._renderables.push(imgui.renderable);  
 
         this._cameraEntity = new CameraEntity();
         this._cameraEntity.transform.Rotate(new Vector3(-20, 0, 0))
@@ -91,7 +85,6 @@ export default class Game
     private Update(deltaTime: number): void
     {
         this.InputUpdate(deltaTime);
-        this.UpdateColor(deltaTime);
         this.Draw();
     }
 
@@ -119,37 +112,6 @@ export default class Game
             
         }
     }
-
-    private UpdateColor(deltaTime: number): void
-    {
-        this._color[0] = this._color[0] > 1 ? 0 : this._color[0] += 1 * deltaTime;
-        this._color[1] = this._color[1] > 1 ? 0 : this._color[1] += 3 * deltaTime;
-        this._color[2] = this._color[2] > 1 ? 0 : this._color[2] += 2 * deltaTime;
-
-        for(let r = 0; r < this._renderables.length; r++)
-        {
-            if (r === 0)
-            {
-                continue;
-            }
-
-            const currTransform = this._renderables[r].transform;
-            const currMaterial = this._renderables[r].material;
-
-            currTransform.Rotate(
-                new Vector3(
-                    currTransform.rotation.x + 1, 
-                    currTransform.rotation.y + 1, 
-                    currTransform.rotation.z + 1
-                ));
-                    
-            currMaterial.SetUniform("u_Color", this._color);
-            
-            let reverseLightDirection = new Vector3(0.2, 0.7, 1);
-            currMaterial.SetUniform("u_ReverseLightDirection", reverseLightDirection.Normalize().ToArray());
-        }
-    }
-
 
     private InputUpdate(deltaTime: number): void
     {
@@ -190,61 +152,6 @@ export default class Game
             this._worldPosition.x -= speed;
         }
     }
-
-    public Cube(): number[]
-    {
-        return [
-            // Front face
-            -1.0 , -1.0,  1.0,          
-            1.0 , -1.0,  1.0,           
-            1.0 ,  1.0,  1.0,           
-            -1.0 ,  1.0,  1.0,          
-
-            // Back face
-            -1.0 , -1.0, -1.0,          
-            -1.0 ,  1.0, -1.0,          
-            1.0 ,  1.0, -1.0,           
-            1.0 , -1.0, -1.0,           
-
-            // Top face
-            -1.0 ,  1.0, -1.0,          
-            -1.0 ,  1.0,  1.0,          
-            1.0 ,  1.0,  1.0,           
-            1.0 ,  1.0, -1.0,           
-
-            // Bottom face
-            -1.0 , -1.0, -1.0,          
-            1.0 , -1.0, -1.0,           
-            1.0 , -1.0,  1.0,           
-            -1.0 , -1.0,  1.0,          
-
-            // Right face
-            1.0 , -1.0, -1.0,           
-            1.0 ,  1.0, -1.0,           
-            1.0 ,  1.0,  1.0,           
-            1.0 , -1.0,  1.0,           
-
-            // Left face
-            -1.0 , -1.0, -1.0,          
-            -1.0 , -1.0,  1.0,          
-            -1.0 ,  1.0,  1.0,            
-            -1.0 ,  1.0, -1.0,          
-
-        ]
-    }
-    
-    public CubeIndices(): number[]
-    {
-        return [
-            0,  1,  2,      0,  2,  3,    // front
-            4,  5,  6,      4,  6,  7,    // back
-            8,  9,  10,     8,  10, 11,   // top
-            12, 13, 14,     12, 14, 15,   // bottom
-            16, 17, 18,     16, 18, 19,   // right
-            20, 21, 22,     20, 22, 23,   // left
-          ];
-    }
-    
 
     // public LookAt(cameraPos: Vector3, target: Vector3, up: Vector3 = Vector3.UP): Mat4x4
     // {
