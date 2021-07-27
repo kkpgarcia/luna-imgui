@@ -2,14 +2,14 @@ import VertexArray from "./VertexArray";
 import VertexBuffer from "./VertexBuffer";
 import IndexBuffer from "./IndexBuffer";
 import VertexBufferLayout from "./VertexBufferLayout";
-import { Services } from "luna-engine";
+import { Services, Vector3 } from "luna-engine";
 
 export interface MeshData
 {
     vertices: number[],
-    normals: number[],
     colors: number[],
-    indices: number[]
+    indices: number[],
+    calculateNormals: boolean
 }
 
 export default class Mesh
@@ -27,15 +27,13 @@ export default class Mesh
         this._vertexArrayObject = new VertexArray();
 
         //TODO: Add colors to preprocess buffers
-        const combinedBuffers = this.PreprocessBuffers(data.vertices, data.normals, data.colors);
+        const combinedBuffers = this.PreprocessBuffers(data.vertices, data.colors, data.calculateNormals);
         const vertexBuffer = new VertexBuffer(combinedBuffers);
         const layout = new VertexBufferLayout();
 
-        console.log(combinedBuffers);
-
         //TODO: Automatically check for data layout
         if (data.vertices) layout.Push(3, gl.FLOAT);
-        if (data.normals) layout.Push(3, gl.FLOAT);
+        if (data.calculateNormals) layout.Push(3, gl.FLOAT);
         if (data.colors) layout.Push(4, gl.FLOAT);
         
         this._vertexArrayObject.AddBuffer(vertexBuffer, layout);
@@ -44,19 +42,33 @@ export default class Mesh
         this._vertexArrayObject.SetIndexBuffer(indexBuffer);
     }
 
-    private PreprocessBuffers(position: number[], normals: number[], colors: number[]): number[]
+    public CalculateNormals(model: number[]): number[]
     {
         let retValue = [];
 
-        for (let i = 0, vIdx = 0, nIdx = 0, cIdx = 0; i < position.length; i += 3)
+        for(let i = 0; i < model.length; i += 3)
         {
-            if (position)
+            let normalizedValue = new Vector3(model[i + 0], model[i + 1], model[i + 2]).Normalize().ToArray();
+            retValue = retValue.concat(normalizedValue);
+        }
+
+        return retValue;
+    }
+
+    private PreprocessBuffers(verices: number[], colors: number[], calculateNormals = false): number[]
+    {
+        let retValue = [];
+        let normals = calculateNormals ? this.CalculateNormals(verices) : [];
+
+        for (let i = 0, vIdx = 0, nIdx = 0, cIdx = 0; i < verices.length; i += 3)
+        {
+            if (verices)
             {
-                for (let j = vIdx; j < vIdx + 3; j++) retValue.push(position[j]);
+                for (let j = vIdx; j < vIdx + 3; j++) retValue.push(verices[j]);
                 vIdx += 3;
             }
             
-            if (normals)
+            if (normals.length > 0)
             {
                 for (let j = nIdx; j < nIdx + 3; j++) retValue.push(normals[j]);
                 nIdx += 3;

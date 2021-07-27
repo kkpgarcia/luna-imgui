@@ -26,7 +26,7 @@ export class ViewportGrid
             vertices: this.Grid(100),
             indices: this.GridIndices(100),
             colors: null,
-            normals: null
+            calculateNormals: false
         })
 
         const gridShader = new Shader("grid.shader");

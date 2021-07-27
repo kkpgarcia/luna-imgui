@@ -17,6 +17,7 @@ import Shader from "./engine-dev/Rendering/Shader";
 import Renderer from "./engine-dev/Rendering/Renderer";
 import Material from "./engine-dev/Rendering/Material";
 import Mesh from "./engine-dev/Rendering/Mesh";
+import Primitives, { PrimitiveType } from "./engine-dev/Component/Primitives";
 
 export interface IRenderable
 {
@@ -27,6 +28,8 @@ export interface IRenderable
 
 export default class Game
 {
+    private _renderables: IRenderable[];
+
     private _color: number[] = [0.2, 1, 0.2, 1];
     
     private _numObjects = 6;
@@ -34,8 +37,6 @@ export default class Game
 
     //Grid
     private _cameraEntity: CameraEntity;
-
-    private _renderables: IRenderable[];
 
     private _worldPosition: Vector3 = new Vector3();
     private _worldRotation: Vector3 = new Vector3();
@@ -59,12 +60,7 @@ export default class Game
         this._renderables.push(grid.Renderable);
 
         //Cube
-        const mesh = new Mesh({
-            vertices: this.Cube(),
-            normals: this.CalculateNormals(this.Cube()),
-            indices: this.CubeIndices(),
-            colors: null
-        })
+        const mesh = Primitives.Create(PrimitiveType.CUBE, null);
      
         const shader = new Shader("transform.shader");
         const material = new Material(shader);
@@ -248,19 +244,7 @@ export default class Game
             20, 21, 22,     20, 22, 23,   // left
           ];
     }
-
-    public CalculateNormals(model: number[]): number[]
-    {
-        let retValue = [];
-
-        for(let i = 0; i < model.length; i += 3)
-        {
-            let normalizedValue = new Vector3(model[i + 0], model[i + 1], model[i + 2]).Normalize().ToArray();
-            retValue = retValue.concat(normalizedValue);
-        }
-
-        return retValue;
-    }
+    
 
     // public LookAt(cameraPos: Vector3, target: Vector3, up: Vector3 = Vector3.UP): Mat4x4
     // {

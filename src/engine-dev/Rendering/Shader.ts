@@ -15,10 +15,8 @@ export default class Shader
         this._uniformLocationCache = new Map<string, WebGLUniformLocation>();
         this._availableUniforms = new Map<string, string>();
 
-        
         const cached = Services.AppCache.GetShader(source);
         const parsed = this.ParseShader(cached);
-        console.log(parsed);
 
         this._shader = this.CreateProgram(parsed[0], parsed[1]);
 

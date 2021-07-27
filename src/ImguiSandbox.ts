@@ -4,6 +4,7 @@ import Shader from "./engine-dev/Rendering/Shader";
 import Renderer from "./engine-dev/Rendering/Renderer";
 import Transform from "./engine-dev/Component/Transform";
 import Mesh from "./engine-dev/Rendering/Mesh";
+import Primitives, { PrimitiveType } from "./engine-dev/Component/Primitives";
 
 interface RenderObject
 {
@@ -25,19 +26,10 @@ export default class ImguiSandbox
     public Start()
     {
         const radius = 50;
-        const vertices = this.CreateRoundedRectangle(800, 800, radius);
+        const mesh = Primitives.Create(PrimitiveType.ROUNDED_PLANE, [800, 800, radius]);
 
-        const mesh = new Mesh({
-            vertices: vertices,
-            indices: this.CreateIndices(radius),
-            colors: this.CreateColors(vertices.length),
-            normals: null
-        });
-
-        
         const shader = new Shader("imgui.shader");
         // const material = new Material(shader);
-
         // material.SetUniform("u_Color", [0, 0, 0, 0.8]);
 
         const transform = new Transform();
@@ -66,7 +58,7 @@ export default class ImguiSandbox
         // let viewProjection = Mat4x4.Multiply(projection, view);
 
 
-        this._renderables.forEach(element => {
+        this._renderables.forEach(element => {  
             // Renderer.Begin(Mat4x4.Orthographic(0, Screen.Width, Screen.Height, 0, 400, -400), Mat4x4.IDENTITY, element.transform.matrix, element.mat);
 
             let matrix = Mat4x4.Translation(new Vector3(Screen.Width/2, Screen.Height/2));
@@ -147,137 +139,4 @@ export default class ImguiSandbox
 
     //     return textCtx.canvas;
     // }
-
-
-    public CreateRoundedRectangle(width: number, height: number, radius: number): number[]
-    {
-        width = (width - radius) / Screen.Width;
-        height = (height - radius) / Screen.Height;
-
-        const xOffset = radius / Screen.Width;
-        const yOffset = radius / Screen.Height;
-
-        let retValue = [
-            //Main Box
-            -width, -height, 0, 
-             width, -height, 0, 
-             width,  height, 0, 
-            -width,  height, 0, 
-            //Upper
-            -width, -height + yOffset, 0,
-             width, -height + yOffset, 0,
-             width,  height + yOffset, 0,
-            -width,  height + yOffset, 0,
-            //lower
-            -width, -height - yOffset, 0,
-             width, -height - yOffset, 0,
-             width,  height - yOffset, 0,
-            -width,  height - yOffset, 0,
-            //Right
-            -width + xOffset, -height, 0,
-             width + xOffset, -height, 0,
-             width + xOffset,  height, 0,
-            -width + xOffset,  height, 0,
-            //Left
-            -width - xOffset, -height, 0,
-             width - xOffset, -height, 0,
-             width - xOffset,  height, 0,
-            -width - xOffset,  height, 0,
-        ]
-
-        const numPoints = Math.floor(radius / 10);
-
-        const quadrants = [
-            [width, height, 0],
-            [-width, height, 0],
-            [-width, -height, 0],
-            [width, -height, 0]
-        ]
-
-        let toConcat = [];
-
-        
-        for (let i = 0; i < quadrants.length; ++i)
-        {
-            const currQuadrant = quadrants[i];
-            
-            toConcat = toConcat.concat(currQuadrant);
-            
-            for (let j = 0; j < numPoints + 1; ++j)
-            {
-                const angle = j * (Math.PI / 2) / numPoints + this.DegreeToRad(i * 90);
-                const x = (Math.cos(angle) * radius/ Screen.Width);
-                const y = (Math.sin(angle) * radius/ Screen.Height);
-                
-                toConcat = toConcat.concat([
-                    x + currQuadrant[0],
-                    y + currQuadrant[1],
-                    0
-                ]);
-            }
-        }
-        
-        retValue = retValue.concat(toConcat);
-
-        return retValue;
-    }
-
-    public CreateIndices(radius: number): number[]
-    {
-        const retValue = [
-            //Center
-            0,  1,  2, 
-            0,  2,  3,   
-
-            //Upper
-            4, 5, 6,
-            4, 6, 7,
-
-            //Lower
-            8, 9, 10,
-            8, 10, 11,
-
-            //Right
-            12, 13, 14,
-            12, 14, 15,
-
-            //Left
-            16, 17, 18,
-            16, 18, 19,
-        ];
-        const numPoints = Math.floor(radius / 10);
-
-        for (let j = 0; j < 4; j++)
-        {
-            const currIdx = retValue[retValue.length - 1] + 1;
-            for (let i = 0; i < numPoints + 1; i++)
-            {
-                retValue.push(currIdx);
-                retValue.push(currIdx + i);
-                retValue.push(currIdx + (i + 1));
-            }
-        }
-
-        return retValue;
-    }
-
-    private CreateColors(length: number): number[]
-    {
-        let retVal = [];
-
-        for(let i = 0; i < length; i++) 
-        {
-            retVal.push(0);
-            retVal.push(0);
-            retVal.push(0);
-            retVal.push(0.5);
-        }
-
-        return retVal;
-    }
-
-    public DegreeToRad(angle: number): number
-    {
-        return angle * Math.PI / 180;
-    }
 }
